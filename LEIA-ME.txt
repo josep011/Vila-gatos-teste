@@ -1,0 +1,32 @@
+VILA DOS GATOS
+==============
+
+Como colocar no GitHub Pages
+----------------------------
+1. Crie um repositório novo (ex.: "vila-dos-gatos").
+2. Envie TODOS os arquivos desta pasta para a raiz do repositório
+   (sem subpastas): index.html, os .js, os dois .glb e o three.module.js.
+3. Em Settings > Pages, escolha a branch "main" e a pasta "/ (root)".
+4. O jogo abre em: https://SEU-USUARIO.github.io/vila-dos-gatos/
+
+Arquivos
+--------
+index.html              tela, botões e estilos
+jogo.js                 jogador, moradores, conversas, lojas, pesca, relíquias, missões, minimapa
+mundo.js                mapas de fora: Vila (praça + quarteirão) e Praia
+interiores.js           os 9 cômodos (cada um é montado só quando você entra)
+pecas.js                chapéus, peixes, relíquias, vara de pescar
+dados.js                itens, preços, falas, missões (fácil de editar!)
+nucleo.js               materiais, formas, texturas, partículas e sons
+gato.js                 o "cérebro" dos gatinhos (o mesmo do Museu/Quarto, com gestos novos)
+gatinho_terno_leve.glb  seu gato de terno (jogador e moradores)
+gatinha_doutora.glb     sua gatinha doutora (Dra. Mel, na clínica)
+three.module.js, GLTFLoader.js, BufferGeometryUtils.js, RoundedBoxGeometry.js   biblioteca three.js (licença em LICENSE-three.txt)
+
+Controles
+---------
+Celular: controle redondo à esquerda anda; A (amarelo) fala/entra/pega/pesca; B (azul) usa o que está na mão;
+         mochila e som no canto; toque no minimapa para ver o mapa grande.
+Teclado: WASD ou setas andam (Shift anda devagar); Espaço/E = A; Q = B; I = mochila; M = mapa.
+
+O progresso fica salvo no próprio aparelho (navegador).

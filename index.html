@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#8fd46a">
+<title>Vila dos Gatos</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%B1%3C/text%3E%3C/svg%3E">
+<style>
+  :root { --creme: #fff8e6; --marrom: #6b4a2b; --folha: #58a55c; --folha2: #3f8a4a; --sol: #ffc93c; --rosa: #ff7f9d; --agua: #56c1c7; --sombra: 0 6px 0 rgba(84, 58, 30, .22); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9fe0ff; font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; color: var(--marrom); user-select: none; -webkit-user-select: none; touch-action: none; }
+  canvas#tela { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+  .bolha { background: var(--creme); border-radius: 22px; box-shadow: var(--sombra); border: 3px solid #fff; }
+
+  /* topo */
+  #hud { position: fixed; left: max(10px, env(safe-area-inset-left)); top: max(10px, env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 7px; align-items: flex-start; z-index: 5; pointer-events: none; }
+  .chip { padding: 6px 13px 6px 9px; font-weight: 800; font-size: 15px; display: flex; gap: 7px; align-items: center; border-radius: 999px; background: var(--creme); border: 3px solid #fff; box-shadow: 0 4px 0 rgba(84, 58, 30, .2); font-variant-numeric: tabular-nums; }
+  .chip i { font-style: normal; font-size: 17px; }
+  #efeitos { display: flex; gap: 5px; flex-wrap: wrap; max-width: 46vw; }
+  #efeitos .chip { font-size: 12px; padding: 3px 9px 3px 6px; background: #fff3c4; }
+  #missaoChip { font-size: 12px; max-width: 54vw; background: #e9f7e4; pointer-events: auto; line-height: 1.2; border-radius: 16px; }
+  #topoDir { position: fixed; right: max(10px, env(safe-area-inset-right)); top: max(10px, env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 5; }
+  #mapa { width: 124px; height: 124px; border-radius: 26px; border: 4px solid #fff; box-shadow: var(--sombra); background: #8fd46a; display: block; }
+  #botoesTopo { display: flex; gap: 7px; }
+  .redondo { width: 46px; height: 46px; border-radius: 50%; background: var(--creme); border: 3px solid #fff; box-shadow: 0 4px 0 rgba(84, 58, 30, .22); font-size: 21px; display: grid; place-items: center; }
+  .redondo:active, .acao:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(84, 58, 30, .22); }
+
+  /* controles */
+  #joy { position: fixed; left: max(22px, env(safe-area-inset-left)); bottom: max(26px, env(safe-area-inset-bottom)); width: 132px; height: 132px; border-radius: 50%; background: rgba(255, 248, 230, .5); border: 4px solid rgba(255, 255, 255, .85); z-index: 5; touch-action: none; }
+  #joyP { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px; border-radius: 50%; background: var(--creme); border: 3px solid #fff; box-shadow: 0 4px 0 rgba(84, 58, 30, .25); }
+  #acoes { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); width: 176px; height: 150px; z-index: 5; }
+  .acao { position: absolute; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 6px 0 rgba(84, 58, 30, .28); font-weight: 900; display: grid; place-items: center; text-align: center; line-height: 1.05; touch-action: none; }
+  #btnA { right: 0; bottom: 0; width: 100px; height: 100px; background: var(--sol); font-size: 15px; padding: 6px; }
+  #btnA small { display: block; font-size: 11px; opacity: .7; font-weight: 800; }
+  #btnB { left: 0; top: 0; width: 72px; height: 72px; background: #bfe9ff; font-size: 28px; }
+  #btnB small { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); font-size: 10px; background: #fff; border-radius: 9px; padding: 1px 7px; white-space: nowrap; }
+  #btnB .tempo { position: absolute; inset: -4px; border-radius: 50%; background: conic-gradient(rgba(60, 60, 80, .45) var(--p, 0%), transparent 0); pointer-events: none; }
+  @media (hover: hover) and (pointer: fine) { #joy { display: none; } #acoes { opacity: .92; } }
+
+  /* diálogo */
+  #dialogo { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(640px, calc(100vw - 24px)); z-index: 20; display: none; }
+  #dialogo.on { display: block; animation: sobe .22s cubic-bezier(.2, 1.4, .4, 1); }
+  @keyframes sobe { from { transform: translate(-50%, 24px) scale(.96); opacity: 0; } }
+  #dCaixa { padding: 22px 20px 18px; min-height: 104px; font-size: 17px; font-weight: 700; line-height: 1.38; position: relative; border-radius: 30px; }
+  #dNome { position: absolute; left: 18px; top: -17px; background: var(--rosa); color: #fff; padding: 4px 15px; border-radius: 999px; font-weight: 900; font-size: 14px; border: 3px solid #fff; transform: rotate(-3deg); box-shadow: 0 3px 0 rgba(84, 58, 30, .2); }
+  #dSeta { position: absolute; right: 18px; bottom: 9px; color: var(--rosa); font-size: 15px; animation: quica .7s infinite alternate ease-in-out; }
+  @keyframes quica { to { transform: translateY(5px); } }
+  #dOpcoes { display: flex; flex-direction: column; gap: 7px; align-items: flex-end; margin-bottom: 9px; }
+  #dOpcoes button { background: var(--creme); border: 3px solid #fff; border-radius: 999px; padding: 9px 18px; font-weight: 800; font-size: 15px; box-shadow: 0 4px 0 rgba(84, 58, 30, .22); max-width: 100%; text-align: left; }
+  #dOpcoes button:active, #dOpcoes button.foco { background: var(--sol); }
+
+  /* painéis */
+  #painel { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; background: rgba(60, 90, 60, .28); padding: 12px; }
+  #painel.on { display: grid; }
+  #pCaixa { width: min(560px, 100%); max-height: min(86vh, 660px); display: flex; flex-direction: column; padding: 14px; border-radius: 30px; animation: pula .25s cubic-bezier(.2, 1.4, .4, 1); }
+  @keyframes pula { from { transform: scale(.9); opacity: 0; } }
+  #pTopo { display: flex; align-items: center; gap: 10px; padding: 2px 4px 10px; }
+  #pTitulo { font-weight: 900; font-size: 19px; flex: 1; }
+  #pMoedas { font-weight: 800; background: #fff3c4; border-radius: 999px; padding: 4px 11px; font-size: 14px; }
+  #pFechar { width: 38px; height: 38px; border-radius: 50%; background: var(--rosa); color: #fff; font-weight: 900; font-size: 16px; border: 3px solid #fff; }
+  #pCorpo { overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding: 2px; flex: 1; }
+  .linha { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; background: #fff; border-radius: 18px; padding: 9px 12px; margin-bottom: 7px; border: 2px solid #f1e3c4; }
+  .linha:active { background: #fff3c4; }
+  .linha[disabled] { opacity: .5; }
+  .linha .ic { font-size: 27px; width: 40px; text-align: center; flex: none; }
+  .linha .tx { flex: 1; min-width: 0; }
+  .linha .tx b { display: block; font-size: 15px; }
+  .linha .tx span { font-size: 12px; opacity: .8; line-height: 1.25; display: block; }
+  .linha .dr { font-weight: 900; font-size: 14px; white-space: nowrap; }
+  #grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 7px; }
+  .slot { aspect-ratio: 1; background: #fff; border-radius: 16px; border: 2px solid #f1e3c4; font-size: 27px; display: grid; place-items: center; position: relative; }
+  .slot.sel { border-color: var(--rosa); background: #fff0f3; }
+  .slot.rel { background: linear-gradient(145deg, #fff8d6, #ffe9a8); border-color: #ffd166; }
+  .slot em { position: absolute; right: 4px; bottom: 2px; font-size: 11px; font-style: normal; font-weight: 900; }
+  .slot u { position: absolute; left: 3px; top: 1px; font-size: 11px; text-decoration: none; }
+  #detalhe { background: #fff; border-radius: 18px; padding: 11px 13px; margin-top: 9px; border: 2px solid #f1e3c4; min-height: 86px; }
+  #detalhe b { font-size: 16px; } #detalhe p { margin: 4px 0 8px; font-size: 13px; line-height: 1.3; }
+  .pilula { background: var(--folha); color: #fff; border-radius: 999px; padding: 8px 15px; font-weight: 900; font-size: 14px; box-shadow: 0 3px 0 var(--folha2); margin-right: 6px; }
+  .pilula.b { background: #fff; color: var(--marrom); box-shadow: 0 3px 0 #e2d2b0; border: 2px solid #f1e3c4; }
+  #mapaG { width: 100%; border-radius: 20px; display: block; }
+
+  /* achado */
+  #cartao { position: fixed; left: 50%; top: 15%; transform: translateX(-50%); z-index: 22; padding: 13px 22px; text-align: center; display: none; max-width: calc(100vw - 30px); border-radius: 26px; }
+  #cartao.on { display: block; animation: pula .3s cubic-bezier(.2, 1.5, .4, 1); }
+  #cartao b { display: block; font-size: 19px; } #cartao span { font-size: 13px; opacity: .85; } #cartao i { font-style: normal; font-size: 12px; color: #c9485b; font-weight: 900; letter-spacing: .08em; }
+  #toasts { position: fixed; left: 50%; top: max(66px, calc(env(safe-area-inset-top) + 56px)); transform: translateX(-50%); z-index: 21; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; width: max-content; max-width: calc(100vw - 290px); min-width: 120px; }
+  .toast { background: var(--creme); border: 3px solid #fff; border-radius: 999px; padding: 6px 15px; font-weight: 800; font-size: 13.5px; box-shadow: 0 4px 0 rgba(84, 58, 30, .2); animation: toast 3s forwards; text-align: center; }
+  @keyframes toast { 0% { transform: translateY(-14px) scale(.9); opacity: 0; } 8%, 85% { transform: none; opacity: 1; } 100% { transform: translateY(-10px); opacity: 0; } }
+  #local { position: fixed; left: 50%; top: 24%; transform: translateX(-50%) rotate(-2deg); z-index: 8; background: var(--folha); color: #fff; font-weight: 900; font-size: 22px; padding: 8px 26px; border-radius: 999px; border: 4px solid #fff; box-shadow: 0 6px 0 rgba(40, 80, 40, .3); opacity: 0; pointer-events: none; white-space: nowrap; }
+  #local.on { animation: local 2.6s forwards; }
+  @keyframes local { 0% { opacity: 0; transform: translateX(-50%) translateY(-20px) rotate(-2deg) scale(.8); } 12%, 80% { opacity: 1; transform: translateX(-50%) rotate(-2deg); } 100% { opacity: 0; } }
+  #exclama { position: fixed; z-index: 9; font-size: 44px; font-weight: 900; color: #ff3b5c; text-shadow: 0 3px 0 #fff, 0 -3px 0 #fff, 3px 0 0 #fff, -3px 0 0 #fff; display: none; transform: translate(-50%, -100%); animation: quica .16s infinite alternate; pointer-events: none; }
+  #clarao { position: fixed; inset: 0; background: #fff; opacity: 0; z-index: 9; pointer-events: none; transition: opacity .5s; }
+  #transicao { position: fixed; inset: 0; z-index: 40; pointer-events: none; display: none; }
+
+  /* início */
+  #inicio { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: linear-gradient(#9fe0ff 0 52%, #8fd46a 52%); text-align: center; padding: 20px; overflow: hidden; }
+  #inicio .colina { position: absolute; left: -10%; right: -10%; top: 44%; height: 30%; background: #8fd46a; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+  #inicio .nuvem { position: absolute; background: #fff; border-radius: 999px; height: 34px; opacity: .9; animation: nuvem 40s linear infinite; }
+  @keyframes nuvem { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+  #inicio .cx { position: relative; }
+  #inicio h1 { margin: 0; font-size: clamp(40px, 11vw, 78px); line-height: .95; color: #fff; font-weight: 900; letter-spacing: -.01em; text-shadow: 0 5px 0 var(--folha2), 0 9px 0 rgba(40, 80, 40, .25); transform: rotate(-3deg); }
+  #inicio h1 span { color: var(--sol); display: block; }
+  #inicio p { font-weight: 800; margin: 20px 0 16px; font-size: 15px; }
+  #barraFora { width: min(260px, 70vw); height: 16px; background: #fff; border-radius: 999px; margin: 0 auto 18px; overflow: hidden; border: 3px solid #fff; box-shadow: var(--sombra); }
+  #barra { height: 100%; width: 3%; background: var(--rosa); border-radius: 999px; transition: width .2s; }
+  #jogar { background: var(--sol); font-weight: 900; font-size: 22px; padding: 13px 44px; border-radius: 999px; border: 4px solid #fff; box-shadow: 0 7px 0 #d99a00; display: none; }
+  #jogar:active { transform: translateY(4px); box-shadow: 0 3px 0 #d99a00; }
+  #novo { display: none; margin: 16px auto 0; background: none; font-weight: 800; font-size: 13px; text-decoration: underline; opacity: .75; }
+  .some { display: none !important; }
+</style>
+</head>
+<body>
+<canvas id="tela"></canvas>
+
+<div id="hud">
+  <div class="chip"><i id="iconeHora">☀️</i><span id="hora">08:00</span><span style="opacity:.55">·</span><span id="dia">Dia 1</span></div>
+  <div class="chip"><i>🐟</i><span id="moedas">0</span></div>
+  <div id="efeitos"></div>
+  <div class="chip" id="missaoChip"></div>
+</div>
+<div id="topoDir">
+  <canvas id="mapa" width="248" height="248"></canvas>
+  <div id="botoesTopo">
+    <button class="redondo" id="btnSom" aria-label="Som">🔊</button>
+    <button class="redondo" id="btnMochila" aria-label="Mochila">🎒</button>
+  </div>
+</div>
+
+<div id="joy"><div id="joyP"></div></div>
+<div id="acoes">
+  <button class="acao" id="btnB"><span id="bIcone">✋</span><span class="tempo"></span><small id="bRot">mão</small></button>
+  <button class="acao" id="btnA"><span id="aRot">Pular</span></button>
+</div>
+
+<div id="local"></div>
+<div id="exclama">!</div>
+<div id="clarao"></div>
+<div id="toasts"></div>
+<div id="cartao" class="bolha"><i id="cTag"></i><b id="cNome"></b><span id="cDesc"></span></div>
+
+<div id="dialogo">
+  <div id="dOpcoes"></div>
+  <div id="dCaixa" class="bolha"><div id="dNome"></div><div id="dTexto"></div><div id="dSeta">▼</div></div>
+</div>
+
+<div id="painel">
+  <div id="pCaixa" class="bolha">
+    <div id="pTopo"><div id="pTitulo"></div><div id="pMoedas"></div><button id="pFechar">✕</button></div>
+    <div id="pCorpo"></div>
+  </div>
+</div>
+
+<div id="transicao"></div>
+
+<div id="inicio">
+  <div class="nuvem" style="top:9%;width:120px;animation-delay:-8s"></div>
+  <div class="nuvem" style="top:22%;width:80px;animation-delay:-24s;animation-duration:55s"></div>
+  <div class="nuvem" style="top:31%;width:150px;animation-delay:-33s;animation-duration:48s"></div>
+  <div class="colina"></div>
+  <div class="cx">
+    <h1>Vila <span>dos Gatos</span></h1>
+    <p id="msgIni">Arrumando a praça...</p>
+    <div id="barraFora"><div id="barra"></div></div>
+    <button id="jogar">Jogar</button>
+    <button id="novo">começar do zero</button>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "./three.module.js" } }
+</script>
+<script type="module" src="./jogo.js?v=1"></script>
+</body>
+</html>
